@@ -167,6 +167,54 @@ class SearchAboutNews(Tk):
 
         return found_links
 
+    def search_duckduckgo(self, word, search_link, time_option, max_results='5'):
+        found_links = []
+        processed_urls = set()
+
+        encoded_word = quote(word)
+        search_url = f"{search_link}{encoded_word}"
+        driver = self.start_driver()
+        driver.get(search_url)
+        page_count = 0
+
+        while len(found_links) < max_results:
+            try:
+                WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "a.result__a"))
+                )
+
+                links_found = 0
+                search_results = driver.find_elements(By.CSS_SELECTOR, "a.result__a")
+                for result in search_results:
+                    href = result.get_attribute("href")
+                    if href and href not in processed_urls:
+                        found_links.append({'link': href})
+                        processed_urls.add(href)
+                        links_found += 1
+                        if len(found_links) >= max_results:
+                            break
+
+                next_button = driver.find_element(By.CSS_SELECTOR, "input.btn.btn--alt[value='Next']")
+                if next_button:
+                    next_button.click()
+                    time.sleep(random.uniform(1.0, 3.0))
+                else:
+                    break
+
+                if links_found == 0:
+                    break
+
+                page_count += 1
+
+            except Exception as e:
+                print(f"An error occurred: {e}")
+                break
+
+        driver.quit()
+        return found_links
+
+
+
 if __name__ == "__main__":
     app = SearchAboutNews()
     app.execute_task()
