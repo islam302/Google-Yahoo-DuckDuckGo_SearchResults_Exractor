@@ -240,6 +240,26 @@ class SearchAboutNews(Tk):
             print(f"An error occurred while checking the link {link}: {e}")
             return 0.0
 
+    def check_word_in_link_with_selenium(self, link, word, threshold=0.0001):
+        try:
+            driver = self.start_driver()
+            driver.get(link)
+            time.sleep(2)
+            page_content = driver.page_source
+
+            page_content = self.preprocess_text(page_content)
+            word = self.preprocess_text(word)
+            similarity = self.compute_similarity(page_content, word)
+
+            driver.quit()
+
+            return similarity
+
+        except Exception as e:
+            print(f"An error occurred while checking the link {link}: {e}")
+            return 0.0
+
+
 
 
 
