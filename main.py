@@ -124,6 +124,49 @@ class SearchAboutNews(Tk):
 
         return found_links
 
+    def search_yahoo(self, word, search_link, time_option='anytime', max_results='5'):
+        found_links = []
+        processed_urls = set()
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        start = 0
+
+        while len(found_links) < max_results:
+            encoded_word = quote(word)
+            search_url = f"{search_link}{encoded_word}"
+            if time_option != 'anytime':
+                search_url += f"&btf={time_option}"
+
+            try:
+                response = requests.get(search_url, headers=headers)
+                response.raise_for_status()
+
+                if response.status_code == 200:
+                    soup = BeautifulSoup(response.content, "html.parser")
+                    search_results = soup.find_all("div", class_="algo-sr")
+                    for result in search_results:
+                        link_tag = result.find("a")
+                        if link_tag:
+                            href = link_tag.get("href")
+                            if href and href not in processed_urls:
+                                found_links.append({'link': href})
+                                processed_urls.add(href)
+                                if len(found_links) >= max_results:
+                                    break
+
+                start += 10
+                time.sleep(random.uniform(1.0, 3.0))
+
+            except requests.exceptions.HTTPError as e:
+                print(f"HTTP Error occurred: {e}")
+                break
+            except Exception as e:
+                print(f"An error occurred: {e}")
+                break
+
+        return found_links
+
 if __name__ == "__main__":
     app = SearchAboutNews()
     app.execute_task()
