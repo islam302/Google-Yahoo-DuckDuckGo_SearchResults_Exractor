@@ -214,6 +214,34 @@ class SearchAboutNews(Tk):
         return found_links
 
 
+    def preprocess_text(self, text):
+        text = text.lower()
+        text = re.sub(r'\W+', ' ', text)
+        return text
+
+    def compute_similarity(self, text1, text2):
+        vectorizer = TfidfVectorizer().fit_transform([text1, text2])
+        vectors = vectorizer.toarray()
+        return cosine_similarity(vectors)[0, 1]
+
+    def check_word_in_link(self, link, word, threshold=0.001):
+        try:
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+            response = requests.get(link, headers=headers)
+            response.raise_for_status()
+            if response.status_code == 200:
+                page_content = self.preprocess_text(response.text)
+                word = self.preprocess_text(word)
+                similarity = self.compute_similarity(page_content, word)
+                return similarity
+        except Exception as e:
+            print(f"An error occurred while checking the link {link}: {e}")
+            return 0.0
+
+
+
 
 if __name__ == "__main__":
     app = SearchAboutNews()
